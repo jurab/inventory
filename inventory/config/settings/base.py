@@ -101,6 +101,14 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+    },
+    'postgres': {
+        'ENGINE': "django.db.backends.postgresql_psycopg2",
+        'NAME': os.environ.get('POSTGRES_DBNAME') or "inventory",
+        'USER': os.environ.get('POSTGRES_USER') or "jura",
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD') or "inventory_87498134",
+        'HOST': os.environ.get('POSTGRES_HOST') or "localhost",
+        'PORT': os.environ.get('POSTGRES_PORT') or "5432"
     }
 }
 
