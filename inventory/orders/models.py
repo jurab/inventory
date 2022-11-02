@@ -1,6 +1,13 @@
 
+import hashlib
+
 from django.db import models
+from django.db.models import F, Sum
+
 from core.models import TimestampModel
+from core.utils import group_by, dictionary_annotation, has_annotation
+from demands.models import ModuleDemand
+from modules.models import ModulePart, Device
 from parts.models import Part
 from suppliers.models import Supplier
 
@@ -10,6 +17,22 @@ class Order(TimestampModel):
     name = models.CharField(max_length=256, unique=True, blank=True)
     parts = models.ManyToManyField(Part, related_name='orders', through='OrderPart')
     delivered = models.BooleanField(default=False)
+
+    def __repr__(self):
+        return f"<Order {self.id}: {self.name}>"
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        h = int(hashlib.sha1(str(self.created).encode("utf-8")).hexdigest(), 16) % (10 ** 8)
+        self.name = self.name or f"Parts Order {h}"
+        return super().save(*args, **kwargs)
+
+    def price(self):
+        order_parts = OrderPart.objects.filter(order_id=self.id).annotate(total_price=F('price') * F('count'))
+        price = order_parts.aggregate(Sum('total_price'))['total_price__sum']
+        return round(float(price), 2) if price else None
 
     def set_delivered(self, model_part_dict=None):
 
@@ -27,18 +50,17 @@ class Order(TimestampModel):
         to_create = []
 
         for part_id, count in zip(part_ids, counts):
-            print(part_id, count)
             to_create.append(OrderPart(
                 order=self,
                 part_id=part_id,
                 count=count * count_multiplier,
             ))
-            print(to_create[-1].count)
 
         OrderPart.objects.bulk_create(to_create)
 
 
 class OrderPart(models.Model):
+
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_parts')
     part = models.ForeignKey(Part, on_delete=models.CASCADE, related_name='order_parts')
     count = models.PositiveIntegerField(default=1)
@@ -53,3 +75,9 @@ class OrderPart(models.Model):
 
     def __str__(self):
         return self.__repr__()
+
+    @classmethod
+    def annotate_missing(self, qs=None):
+        if qs and has_annotation(qs, 'missing'): return qs
+
+        qs = qs or OrderPart.objects.all()

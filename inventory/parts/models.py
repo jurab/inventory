@@ -1,8 +1,9 @@
 
 
 from django.db import models
+from django.db.models import F, Case, When
 from core.models import TimestampModel
-from core.utils import names_enum
+from core.utils import names_enum, has_annotation
 
 
 PART_CATEGORIES = names_enum(
@@ -43,6 +44,25 @@ class Part(TimestampModel):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def annotate_missing(self, qs=None):
+        if qs and has_annotation(qs, 'missing'): return qs
+
+        from demands.models import ModuleDemand
+        from orders.models import Order
+
+        qs = ModuleDemand.annotate_parts(qs)
+        qs = Order.annotate_parts(qs)
+        qs = qs.annotate(_missing=F('total_demand') - F('total_ordered') - F('stock'))
+        qs = qs.annotate(
+            missing=Case(
+                When(_missing__gte=0, then=F('_missing')),
+                default=0
+            )
+        )
+
+        return qs
 
 
 class PartOption(TimestampModel):

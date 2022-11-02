@@ -12,6 +12,7 @@ class Supplier(models.Model):
 
 
 class PartPrice(TimestampModel):
+
     part = models.ForeignKey(Part, on_delete=models.CASCADE, related_name='prices')
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='prices')
     price = models.IntegerField()
