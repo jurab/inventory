@@ -513,3 +513,7 @@ def custom_titled_filter(title):
             instance.title = title
             return instance
     return Wrapper
+
+
+def has_annotation(qs, field):
+    return field in qs.query.annotations
