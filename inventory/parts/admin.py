@@ -4,7 +4,7 @@ from django.db.models import F
 
 from .models import Part
 from core.utils import custom_titled_filter
-from demands.models import ModuleDemand
+from orders.models import Order
 
 
 class StockFilter(admin.SimpleListFilter):
@@ -13,9 +13,10 @@ class StockFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return (
-            ('below_demand', 'Below Demand'),
             ('in_stock', 'In Stock'),
+            ('insuficient_stock', 'Insuficient Stock'),
             ('ordered', 'Ordered'),
+            ('missing', 'Missing'),
         )
 
     def queryset(self, request, queryset):
@@ -25,19 +26,23 @@ class StockFilter(admin.SimpleListFilter):
             return queryset
 
         return {
-            'below_demand': self.below_demand,
+            'insuficient_stock': self.insuficient_stock,
             'in_stock': self.in_stock,
             'ordered': self.ordered,
+            'missing': self.missing,
         }[option](queryset)
 
-    def below_demand(self, queryset):
+    def insuficient_stock(self, queryset):
         return queryset.filter(total_demand__gt=F('stock'))
 
     def in_stock(self, queryset):
-        pass
+        return queryset.filter(stock__gt=0)
 
     def ordered(self, queryset):
-        pass
+        return queryset.filter(total_ordered__gt=0)
+
+    def missing(self, queryset):
+        return queryset.filter(missing__gt=0)
 
 
 class ModulePartInline(admin.TabularInline):
@@ -49,9 +54,17 @@ class ModulePartInline(admin.TabularInline):
     ordering = 'module__name',
 
 
+@admin.action(description='Order Missing')
+def create_order(modeladmin, request, queryset):
+    order = Order.objects.create()
+    queryset = queryset.annotate(to_order=F('total_demand') - F('total_ordered') - F('stock'))
+    queryset = queryset.filter(to_order__gt=0)
+    order.bulk_add_parts(*zip(*queryset.values_list('id', 'to_order')))
+
+
 @admin.register(Part)
 class PartAdmin(admin.ModelAdmin):
-    list_display = 'uuid', 'name', 'stock', 'demand', 'min_price', 'current_price', 'category', 'title', 'description', 'tme_type', 'farnell_code', 'comp_value', 'comp_class'
+    list_display = 'uuid', 'name', 'stock', 'demand', 'ordered', 'missing', 'min_price', 'current_price', 'category', 'title', 'description', 'tme_type', 'farnell_code', 'comp_value', 'comp_class'
     list_editable = 'name', 'stock', 'min_price', 'current_price', 'category', 'title', 'description', 'tme_type', 'farnell_code', 'comp_value', 'comp_class'
 
     list_filter = 'category', StockFilter, ('modules__name', custom_titled_filter('module name'))
@@ -59,9 +72,17 @@ class PartAdmin(admin.ModelAdmin):
     readonly_fields = 'created', 'modified'
 
     inlines = ModulePartInline,
+    actions = create_order,
 
     def get_queryset(self, request):
-        return ModuleDemand.parts()
+        qs = super().get_queryset(request)
+        return Part.annotate_missing(qs)
 
     def demand(self, part):
         return part.total_demand
+
+    def ordered(self, part):
+        return part.total_ordered
+
+    def missing(self, part):
+        return part.missing
