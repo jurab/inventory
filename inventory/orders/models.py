@@ -58,6 +58,49 @@ class Order(TimestampModel):
 
         OrderPart.objects.bulk_create(to_create)
 
+    def populate_parts(self, module_id=None, device_id=None, part_ids=None, multiplier=1):
+
+        if sum([bool(arg) for arg in (module_id, device_id, part_ids)]) > 1:
+            raise ValueError("`populate_parts` received more than one source argument.")
+
+        if module_id:
+            part_ids, counts = zip(*ModulePart.objects.filter(module_id=module_id).values_list('part_id', 'count').exclude(module__demands=None))
+            count_multiplier = multiplier
+
+        elif device_id:
+            part_ids, counts = zip(*Device.objects.get(id=device_id).part_id_counts().items())
+            count_multiplier = multiplier
+
+        elif part_ids:
+            counts = [1] * len(part_ids)
+
+        else:
+            part_ids, counts = zip(*ModuleDemand.parts().exclude(total_demand__isnull=True).values_list('id', 'total_demand'))
+            count_multiplier = multiplier
+
+        self.bulk_add_parts(part_ids, counts, count_multiplier)
+
+    @classmethod
+    def annotate_parts(cls, qs=None):
+
+        if qs and has_annotation(qs, 'total_ordered'): return qs
+
+        order_parts_by_uuid = group_by(OrderPart.objects.annotate(part_uuid=F('part__uuid')), 'part_uuid')
+        # TODO next line should be optimized with Aggregate / SQL `GROUP BY`
+        uuid_ordered_dict = {uuid: sum([order_part.count for order_part in order_parts]) for uuid, order_parts in order_parts_by_uuid.items()}
+
+        # TODO case annotation will be slow for large parts querysets
+        parts = dictionary_annotation(
+            qs=qs or Part.objects.all(),
+            key_column_name='uuid',
+            new_column_name='total_ordered',
+            field_type=models.IntegerField,
+            data_dict=uuid_ordered_dict,
+            default=0
+        )
+
+        return parts
+
 
 class OrderPart(models.Model):
 
