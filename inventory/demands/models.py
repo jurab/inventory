@@ -4,12 +4,13 @@ from django.db import models
 from django.db.models import F, Value, Sum
 
 from core.models import TimestampModel
-from core.utils import group_by, dictionary_annotation
+from core.utils import group_by, dictionary_annotation, has_annotation
 from modules.models import Module, ModulePart
 from parts.models import Part
 
 
 class ModuleDemand(TimestampModel):
+
     module = models.ForeignKey(Module, on_delete=models.PROTECT, related_name='demands')
     count = models.IntegerField(default=1)
     completed_count = models.IntegerField(default=0)
@@ -50,14 +51,18 @@ class ModuleDemand(TimestampModel):
         return self.module.name
 
     @classmethod
-    def parts(self):
-        module_parts = ModulePart.objects.annotate(total_demand=Sum('module__demands__count') * F('count')).exclude(module__demands=None)
+    def annotate_parts(cls, qs=None):
+
+        if qs and has_annotation(qs, 'total_demand'): return qs
+
+        module_parts = ModulePart.objects.select_related('module').exclude(module__demands=None)
+        module_parts = module_parts.annotate(total_demand=Sum('module__demands__count') * F('count'))
         module_parts_by_uuid = group_by(module_parts, 'part.uuid')
         uuid_demand_dict = {uuid: sum([module_part.total_demand for module_part in module_parts]) for uuid, module_parts in module_parts_by_uuid.items()}
 
-        # TODO case annotation would be slow for large parts querysets
+        # TODO case annotation will be slow for large parts querysets
         parts = dictionary_annotation(
-            qs=Part.objects.all(),
+            qs=qs or Part.objects.all(),
             key_column_name='uuid',
             new_column_name='total_demand',
             field_type=models.IntegerField,

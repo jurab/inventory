@@ -6,7 +6,8 @@ from parts.models import Part
 
 
 class Supplier(models.Model):
-    name = models.CharField(max_length=256)
+
+    name = models.CharField(max_length=256, unique=True)
     parts = models.ManyToManyField(Part, through='PartPrice', related_name='suppliers')
 
 

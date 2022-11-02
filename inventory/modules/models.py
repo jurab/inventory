@@ -8,7 +8,8 @@ from parts.models import Part
 
 
 class Module(TimestampModel):
-    name = models.CharField(max_length=256)
+
+    name = models.CharField(max_length=256, unique=True)
     parts = models.ManyToManyField(Part, through='ModulePart', related_name='modules')
 
     class Meta:

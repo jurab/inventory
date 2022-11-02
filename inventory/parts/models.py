@@ -19,8 +19,9 @@ PART_CATEGORIES = names_enum(
 
 
 class Part(TimestampModel):
-    uuid = models.IntegerField()
-    name = models.CharField(max_length=256)
+
+    uuid = models.IntegerField(unique=True)
+    name = models.CharField(max_length=256, unique=True)
     category = models.CharField(max_length=256, choices=PART_CATEGORIES)
     title = models.CharField(max_length=512, null=True)
     description = models.CharField(max_length=512, null=True)

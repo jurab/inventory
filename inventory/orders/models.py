@@ -7,7 +7,8 @@ from suppliers.models import Supplier
 
 class Order(TimestampModel):
 
-    parts = models.ManyToManyField(Part, related_name='orders')
+    name = models.CharField(max_length=256, unique=True, blank=True)
+    parts = models.ManyToManyField(Part, related_name='orders', through='OrderPart')
     delivered = models.BooleanField(default=False)
 
     def set_delivered(self, model_part_dict=None):
@@ -42,7 +43,7 @@ class OrderPart(models.Model):
     part = models.ForeignKey(Part, on_delete=models.CASCADE, related_name='order_parts')
     count = models.PositiveIntegerField(default=1)
     supplier = models.ForeignKey(Supplier, null=True, blank=True, on_delete=models.SET_NULL)
-    price = models.IntegerField(null=True, blank=True)
+    price = models.FloatField(null=True, blank=True)
 
     class Meta:
         unique_together = 'order', 'part'
