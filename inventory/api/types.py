@@ -10,7 +10,7 @@ from django.db.models.fields.related_descriptors import (
 import graphene
 
 from api.exceptions import NodeNotFound
-from core.utils import camel_to_snake
+from utils.string import camel_to_snake
 
 from .factories import getattr_resolver_factory, qs_resolver_factory
 from .fields import NestedField, ReverseField

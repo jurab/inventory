@@ -1,7 +1,9 @@
 import hashlib
 
+from django.conf import settings
+
 from .meta import MetaBase
-from core.utils import rgetattr
+from utils.core import rgetattr
 
 from cachalot.utils import get_query_cache_key
 
@@ -76,3 +78,17 @@ def query_cache_key(*args, **kwargs):
     hash_string = hashlib.sha256(bytes(hash_string, encoding='utf-8')).hexdigest()
 
     return hash_string
+
+
+def get_registered_node_type(name):
+    for NodeType in settings.GRAPHENE_NODES:
+        if NodeType.__name__ == name:
+            return NodeType
+    raise ValueError('Could not find NodeType', name)
+
+
+def get_primitive_node_type(name):
+    for NodeType in settings.GRAPHENE_PRIMITIVE_NODES:
+        if NodeType.__name__ == name:
+            return NodeType
+    raise ValueError('Could not find _NodeType', name)

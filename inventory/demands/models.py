@@ -4,7 +4,8 @@ from django.db import models
 from django.db.models import F, Value, Sum
 
 from core.models import TimestampModel
-from core.utils import group_by, dictionary_annotation, has_annotation
+from utils.core import group_by
+from utils.django import dictionary_annotation, has_annotation
 from modules.models import Module, ModulePart
 from parts.models import Part
 

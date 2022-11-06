@@ -2,10 +2,11 @@
 import hashlib
 
 from django.db import models
-from django.db.models import F, Sum, Avg
+from django.db.models import F, Sum
 
 from core.models import TimestampModel
-from core.utils import group_by, dictionary_annotation, has_annotation, names_enum, annotate_related_aggregate
+from utils.core import group_by
+from utils.django import dictionary_annotation, has_annotation, names_enum, annotate_related_aggregate
 from demands.models import ModuleDemand
 from modules.models import ModulePart, Device
 from parts.models import Part

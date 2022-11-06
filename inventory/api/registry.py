@@ -12,7 +12,8 @@ from .types import BaseType  # QueryMeta as QueryMetaInput
 from .utils import lockable
 from .validators import validate_type_meta
 
-from core.utils import inherit_from, camel_to_snake, Singleton, rgetattr
+from utils.core import inherit_from, Singleton, rgetattr
+from utils.string import camel_to_snake
 
 from django.db.models import Model
 from graphene_django.registry import reset_global_registry

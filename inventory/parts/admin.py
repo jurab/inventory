@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.db.models import F
 
 from .models import Part
-from core.utils import custom_titled_filter
+from utils.django import custom_titled_filter
 from orders.models import Order
 
 

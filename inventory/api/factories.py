@@ -4,7 +4,7 @@ from .filters import FilterSet
 from .meta import popmeta, meta_base
 from .parsing import selection_from_info
 
-from core.utils import camel_to_snake
+from utils.string import camel_to_snake
 
 from django.db.models import Prefetch
 from graphql_jwt.decorators import login_required

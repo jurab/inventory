@@ -2,7 +2,8 @@ import graphene
 import re
 
 from .parsing import DjangoLookup
-from core.utils import eval_or_none, camel_to_snake
+from utils.misc import eval_or_none
+from utils.string import camel_to_snake
 
 from django.db.models import QuerySet
 

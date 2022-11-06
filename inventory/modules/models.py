@@ -5,7 +5,8 @@ from collections import defaultdict
 from django.db import models
 from django.db.models import Sum, F
 from core.models import TimestampModel
-from core.utils import round_or_none, dictionary_annotation
+from utils.core import round_or_none
+from utils.django import dictionary_annotation
 from parts.models import Part
 
 

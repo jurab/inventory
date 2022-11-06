@@ -5,7 +5,8 @@ from collections import OrderedDict
 from .converter import convert_django_field_to_input
 from .fields import ModelField
 
-from core.utils import inherit_from, camel_to_snake, decapitalize, copy_class
+from utils.core import inherit_from, copy_class
+from utils.string import camel_to_snake, decapitalize
 from graphql_jwt.decorators import login_required
 
 

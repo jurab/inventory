@@ -3,7 +3,7 @@
 from django.db import models
 from django.db.models import F, Case, When
 from core.models import TimestampModel
-from core.utils import names_enum, has_annotation
+from utils.django import names_enum, has_annotation
 
 
 PART_CATEGORIES = names_enum(

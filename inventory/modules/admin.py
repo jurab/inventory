@@ -2,7 +2,7 @@
 from django.contrib import admin
 
 from .models import Module, ModulePart, Device, DeviceModule
-from core.utils import custom_titled_filter
+from utils.django import custom_titled_filter
 
 
 class ModulePartInlineAdmin(admin.TabularInline):

@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 
 from .models import Order, OrderPart
-from core.utils import names_enum, DefaultFilter
+from utils.django import names_enum, DefaultFilter
 from modules.models import Device, Module
 from parts.models import Part
 

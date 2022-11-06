@@ -1,6 +1,8 @@
 
 from functools import reduce
-from core.utils import eval_or_none, camel_to_snake, rgetattr
+from utils.core import rgetattr
+from utils.misc import eval_or_none
+from utils.string import camel_to_snake
 
 from django.db.models import Q, QuerySet
 from graphql.language.ast import Field, FragmentSpread, ListValue, Variable, ObjectValue

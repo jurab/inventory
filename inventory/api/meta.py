@@ -3,7 +3,8 @@ from threading import local
 
 from django.conf import settings
 
-from core.utils import Singleton, camel_to_snake
+from utils.core import Singleton
+from utils.string import camel_to_snake
 
 from .exceptions import TimeoutExit
 

@@ -1,7 +1,7 @@
 
 import graphene
 from .exceptions import RelatedTypeNotFound
-from core.utils import rgetattr
+from utils.core import rgetattr
 
 from django.db.models import Model
 from graphene_django.registry import get_global_registry
