@@ -4,8 +4,51 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 
 from .models import Order, OrderPart
+from core.utils import names_enum, DefaultFilter
 from modules.models import Device, Module
 from parts.models import Part
+
+
+class OrderPartStatusFilter(DefaultFilter):
+
+    title = 'Status'
+    parameter_name = 'order__status'
+    filter_field = 'order__status'
+    default_lookup = 'order__pending'
+    other_lookups = 'order__ordered', 'order__delivered'
+
+
+@admin.register(OrderPart)
+class OrderPartAdmin(admin.ModelAdmin):
+
+    model = OrderPart
+    fields = 'part', 'count', 'price', 'stock', 'demand', 'ordered', 'missing', 'supplier'
+    list_display = 'part', 'count', 'price', 'stock', 'demand', 'ordered', 'missing', 'supplier'
+    autocomplete_fields = 'part',
+    readonly_fields = 'stock', 'demand', 'ordered', 'missing'
+    ordering = 'part__name',
+
+    list_filter = OrderPartStatusFilter,
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        self.part_values_dict = {item['id']: item for item in Part.annotate_missing().values('id', 'total_demand', 'total_ordered', 'missing')}
+        return qs
+
+    def _get_value(self, order_part, field):
+        return self.part_values_dict[order_part.part.id][field]
+
+    def stock(self, order_part):
+        return order_part.part.stock
+
+    def demand(self, order_part):
+        return self._get_value(order_part, 'total_demand')
+
+    def ordered(self, order_part):
+        return self._get_value(order_part, 'total_ordered')
+
+    def missing(self, order_part):
+        return self._get_value(order_part, 'missing')
 
 
 class OrderPartInlineAdmin(admin.TabularInline):
