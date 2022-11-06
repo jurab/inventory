@@ -64,7 +64,7 @@ def create_order(modeladmin, request, queryset):
 
 @admin.register(Part)
 class PartAdmin(admin.ModelAdmin):
-    list_display = 'uuid', 'name', 'stock', 'demand', 'ordered', 'missing', 'min_price', 'current_price', 'category', 'title', 'description', 'tme_type', 'farnell_code', 'comp_value', 'comp_class'
+    list_display = 'uuid', 'name', 'stock', 'demand', 'ordered', 'missing', 'avg_price', 'min_price', 'current_price', 'category', 'title', 'description', 'tme_type', 'farnell_code', 'comp_value', 'comp_class'
     list_editable = 'name', 'stock', 'min_price', 'current_price', 'category', 'title', 'description', 'tme_type', 'farnell_code', 'comp_value', 'comp_class'
 
     list_filter = 'category', StockFilter, ('modules__name', custom_titled_filter('module name'))
@@ -86,3 +86,6 @@ class PartAdmin(admin.ModelAdmin):
 
     def missing(self, part):
         return part.missing
+
+    def avg_price(self, part):
+        return part.avg_price

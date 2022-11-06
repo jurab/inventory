@@ -50,10 +50,11 @@ class Part(TimestampModel):
         if qs and has_annotation(qs, 'missing'): return qs
 
         from demands.models import ModuleDemand
-        from orders.models import Order
+        from orders.models import Order, OrderPart
 
         qs = ModuleDemand.annotate_parts(qs)
         qs = Order.annotate_parts(qs)
+        qs = OrderPart.annotate_parts(qs)
         qs = qs.annotate(_missing=F('total_demand') - F('total_ordered') - F('stock'))
         qs = qs.annotate(
             missing=Case(

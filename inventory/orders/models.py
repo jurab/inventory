@@ -2,10 +2,10 @@
 import hashlib
 
 from django.db import models
-from django.db.models import F, Sum
+from django.db.models import F, Sum, Avg
 
 from core.models import TimestampModel
-from core.utils import group_by, dictionary_annotation, has_annotation, names_enum
+from core.utils import group_by, dictionary_annotation, has_annotation, names_enum, annotate_related_aggregate
 from demands.models import ModuleDemand
 from modules.models import ModulePart, Device
 from parts.models import Part
@@ -128,7 +128,13 @@ class OrderPart(models.Model):
         return self.__repr__()
 
     @classmethod
-    def annotate_missing(self, qs=None):
-        if qs and has_annotation(qs, 'missing'): return qs
-
-        qs = qs or OrderPart.objects.all()
+    def annotate_parts(cls, qs=None):
+        if qs and has_annotation(qs, 'avg_price'): return qs
+        return annotate_related_aggregate(
+            qs,
+            field='avg_price',
+            related_field='part',
+            related_attribute='price',
+            RelatedModel=OrderPart,
+            function='Avg'
+        )
