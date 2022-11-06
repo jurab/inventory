@@ -28,6 +28,8 @@ from django.db.models import (
     QuerySet,
     Value,
     When,
+    Subquery,
+    OuterRef,
 )
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.aggregates import Count
@@ -554,3 +556,39 @@ class DefaultFilter(admin.SimpleListFilter):
                 }, []),
                 'display': title,
             }
+
+
+class SubqueryAggregate(Subquery):
+    template = '(SELECT %(function)s(_agg."%(column)s") FROM (%(subquery)s) _agg)'
+
+    def __init__(self, queryset, column, output_field=None, **extra):
+        if not output_field:
+            # infer output_field from field type
+            output_field = queryset.model._meta.get_field(column)
+        super().__init__(queryset, output_field, column=column, function=self.function, **extra)
+
+
+class SubquerySum(SubqueryAggregate):
+    function = 'SUM'
+
+
+class SubqueryAvg(SubqueryAggregate):
+    function = 'AVG'
+
+
+class SubqueryCount(Subquery):
+    template = "(SELECT count(*) FROM (%(subquery)s) _count)"
+    output_field = PositiveIntegerField()
+
+
+def annotate_related_aggregate(qs, field, related_field, related_attribute, RelatedModel, function):
+    sq = RelatedModel.objects.filter(**{related_field: OuterRef('id')})
+
+    if function == 'count':
+        SubqueryFunction = SubqueryCount
+    else:
+        class SubqueryFunction: pass
+        SubqueryFunction.function = function
+        SubqueryFunction = inherit_from(SubqueryFunction, SubqueryAggregate)
+
+    return qs.annotate(**{field: SubqueryFunction(sq, related_attribute)})
