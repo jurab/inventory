@@ -29,6 +29,7 @@ from django.db.models import (
     Value,
     When,
 )
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models.aggregates import Count
 from django.utils.deprecation import MiddlewareMixin
 
@@ -499,7 +500,7 @@ def sceround(pkscores: Iterable[Tuple[Any, float]], precision=3):
 
 
 def names_enum(*l):
-    return ((item, item.capitalize()) for item in l)
+    return ((item, item.replace('__', ' ').capitalize()) for item in l)
 
 
 def round_or_none(number, decimal_places):
@@ -517,3 +518,39 @@ def custom_titled_filter(title):
 
 def has_annotation(qs, field):
     return field in qs.query.annotations
+
+
+class DefaultFilter(admin.SimpleListFilter):
+
+    def __init__(self, *args, **kwargs):
+        out = super().__init__(*args, **kwargs)
+        for attr in ('title parameter_name filter_field default_lookup other_lookups'.split()):
+            if not hasattr(self, attr):
+                raise ImproperlyConfigured(f"The list filter '{self.__class__.__name__}' does not specify a '{attr}'")
+        return out
+
+    def lookups(self, request, model_admin):
+        return [
+            ('all', 'All'),
+            *names_enum(*self.other_lookups),
+            (None, self.default_lookup.replace('__', ' ').capitalize()),
+
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == 'all': return
+
+        value = self.default_lookup if not self.value() else self.value()
+        value = value if '__' not in value else value.split('__')[1]
+
+        return queryset.filter(**{self.filter_field: value})
+
+    def choices(self, cl):
+        for lookup, title in self.lookup_choices:
+            yield {
+                'selected': self.value() == lookup,
+                'query_string': cl.get_query_string({
+                    self.parameter_name: lookup,
+                }, []),
+                'display': title,
+            }
