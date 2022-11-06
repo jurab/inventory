@@ -5,18 +5,25 @@ from django.db import models
 from django.db.models import F, Sum
 
 from core.models import TimestampModel
-from core.utils import group_by, dictionary_annotation, has_annotation
+from core.utils import group_by, dictionary_annotation, has_annotation, names_enum
 from demands.models import ModuleDemand
 from modules.models import ModulePart, Device
 from parts.models import Part
 from suppliers.models import Supplier
 
 
+STATUS_CHOICES = names_enum(
+    'pending',
+    'ordered',
+    'delivered'
+)
+
+
 class Order(TimestampModel):
 
     name = models.CharField(max_length=256, unique=True, blank=True)
     parts = models.ManyToManyField(Part, related_name='orders', through='OrderPart')
-    delivered = models.BooleanField(default=False)
+    status = models.CharField(max_length=64, choices=STATUS_CHOICES, default='pending')
 
     def __repr__(self):
         return f"<Order {self.id}: {self.name}>"
@@ -44,6 +51,7 @@ class Order(TimestampModel):
             part.stock += order_part.count
 
         Part.bulk_update(parts_to_update)
+        self.status = 'delivered'
 
     def bulk_add_parts(self, part_ids, counts, count_multiplier=1):
 

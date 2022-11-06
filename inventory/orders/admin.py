@@ -78,15 +78,24 @@ class OrderForm(forms.ModelForm):
         return order
 
 
+class OrderStatusFilter(DefaultFilter):
+
+    title = 'Status'
+    parameter_name = 'status'
+    filter_field = 'status'
+    default_lookup = 'pending'
+    other_lookups = 'ordered', 'delivered'
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = '__str__', 'pk', 'delivered', 'part_count', 'price', 'created', 'modified'
+    list_display = '__str__', 'pk', 'status', 'part_count', 'price', 'created', 'modified'
 
     fieldsets = (
         ("", {"fields": (
             ('pk'),
             ('name'),
-            ('delivered',),
+            ('status',),
         )}),
         ("Info", {"fields": (
             ('created',),
@@ -100,9 +109,10 @@ class OrderAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = 'pk', 'created', 'modified'
-    list_editable = 'delivered',
+    list_editable = 'status',
     search_fields = 'parts__name',
     inlines = OrderPartInlineAdmin,
+    list_filter = OrderStatusFilter,
 
     form = OrderForm
 
